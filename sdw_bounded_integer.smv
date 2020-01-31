@@ -212,11 +212,11 @@ DEFINE
         (S_at_landing_position = no & S_mission_configuration = configured & S_obstacle_detection = stable & S_obstacle_detection_failure_notification = notified);
 
 VAR
-    input.distance_to_inspection_point: array 0..3 of real;
-    input.distance_to_landing_location: real;
-    input.altitude: real;
+    input.distance_to_inspection_point: array 0..3 of 0..5;
+    input.distance_to_landing_location: 0..5;
+    input.altitude: 0..5;
 
-    input.battery: real;
+    input.battery: 0..5;
     input.manual_control_on_event: boolean;
     input.manual_control_off_event: boolean;
     input.mission_start_event: boolean;
