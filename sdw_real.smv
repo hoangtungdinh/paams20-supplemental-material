@@ -1,0 +1,532 @@
+MODULE main
+
+VAR
+    S_flying: {flying, on_the_ground};
+    S_pylon_inspection: {complete, not_complete};
+    S_manual_control_request: {on, off};
+    S_at_landing_position: {yes, no, unknown};
+    S_mission_configuration: {configured, not_configured};
+    S_mission_started: {yes, no};
+    S_being_blocked: {yes, no};
+    S_being_blocked_notification: {not_yet_notified, notified};
+    S_communication: {stable, degraded, lost};
+    S_communication_failure_notification: {not_yet_notified, notified};
+    S_battery: {ok, low, critical};
+    S_low_battery_notification: {not_yet_notified, notified};
+    S_critical_battery_notification: {not_yet_notified, notified};
+    S_obstacle_detection: {stable, lost};
+    S_obstacle_detection_failure_notification: {not_yet_notified, notified};
+    S_mission_abort_request: {yes, no};
+
+DEFINE
+    A_take_off :=
+        (S_flying = on_the_ground & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = stable & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = on_the_ground & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = stable & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = on_the_ground & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = on_the_ground & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = on_the_ground & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = stable & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = on_the_ground & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = stable & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = on_the_ground & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = on_the_ground & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_battery = low & S_mission_abort_request = no);
+    A_land :=
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = lost) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_battery = critical) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_mission_abort_request = yes) | 
+        (S_flying = flying & S_pylon_inspection = complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes);
+    A_go_to_landing_zone :=
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = lost) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_battery = critical) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_mission_abort_request = yes) | 
+        (S_flying = flying & S_pylon_inspection = complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes);
+    A_manual_control :=
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = stable & S_battery = ok & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = stable & S_battery = low & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = degraded & S_battery = ok & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = degraded & S_battery = low & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = stable & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = stable & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = degraded & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = degraded & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = degraded & S_communication_failure_notification = not_yet_notified & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = degraded & S_communication_failure_notification = not_yet_notified & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = stable & S_battery = low & S_low_battery_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = degraded & S_battery = low & S_low_battery_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = stable & S_battery = ok & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = stable & S_battery = low & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_battery = ok & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_battery = low & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = stable & S_battery = ok & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = stable & S_battery = low & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_battery = ok & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_battery = low & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = stable & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = stable & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = degraded & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = degraded & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = stable & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = stable & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = degraded & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = degraded & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_communication_failure_notification = not_yet_notified & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_communication_failure_notification = not_yet_notified & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_communication_failure_notification = not_yet_notified & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_communication_failure_notification = not_yet_notified & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = stable & S_battery = low & S_low_battery_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_battery = low & S_low_battery_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = stable & S_battery = low & S_low_battery_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_communication = degraded & S_battery = low & S_low_battery_notification = not_yet_notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_manual_control_request = on & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes) | 
+        (S_flying = flying & S_manual_control_request = on & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes) | 
+        (S_flying = flying & S_manual_control_request = on & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes);
+    A_execute_mission_task :=
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = degraded & S_communication_failure_notification = notified & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = degraded & S_communication_failure_notification = notified & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = degraded & S_communication_failure_notification = notified & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = degraded & S_communication_failure_notification = notified & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = degraded & S_communication_failure_notification = notified & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = degraded & S_communication_failure_notification = notified & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = degraded & S_communication_failure_notification = notified & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = degraded & S_communication_failure_notification = notified & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = stable & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = stable & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = stable & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = stable & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = degraded & S_communication_failure_notification = notified & S_battery = ok & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = degraded & S_communication_failure_notification = notified & S_battery = ok & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = degraded & S_communication_failure_notification = notified & S_battery = ok & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = degraded & S_communication_failure_notification = notified & S_battery = ok & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = stable & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = stable & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = stable & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = stable & S_battery = low & S_low_battery_notification = notified & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = degraded & S_communication_failure_notification = notified & S_battery = ok & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = degraded & S_communication_failure_notification = notified & S_battery = ok & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = degraded & S_communication_failure_notification = notified & S_battery = ok & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = degraded & S_communication_failure_notification = notified & S_battery = ok & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = stable & S_battery = ok & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = stable & S_battery = ok & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = stable & S_battery = ok & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = stable & S_battery = ok & S_obstacle_detection_failure_notification = notified & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = stable & S_battery = ok & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = stable & S_battery = ok & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = stable & S_battery = ok & S_obstacle_detection = stable & S_mission_abort_request = no) | 
+        (S_flying = flying & S_pylon_inspection = not_complete & S_manual_control_request = off & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = yes & S_being_blocked = no & S_communication = stable & S_battery = ok & S_obstacle_detection = stable & S_mission_abort_request = no);
+    A_configure_mission :=
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = stable & S_battery = ok & S_obstacle_detection_failure_notification = notified) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked = no & S_communication = stable & S_battery = ok & S_obstacle_detection_failure_notification = notified) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = stable & S_battery = ok & S_obstacle_detection = stable) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked = no & S_communication = stable & S_battery = ok & S_obstacle_detection = stable) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication_failure_notification = notified & S_battery = ok & S_obstacle_detection_failure_notification = notified) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked = no & S_communication_failure_notification = notified & S_battery = ok & S_obstacle_detection_failure_notification = notified) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication_failure_notification = notified & S_battery = ok & S_obstacle_detection = stable) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked = no & S_communication_failure_notification = notified & S_battery = ok & S_obstacle_detection = stable) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = stable & S_low_battery_notification = notified & S_obstacle_detection_failure_notification = notified) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked = no & S_communication = stable & S_low_battery_notification = notified & S_obstacle_detection_failure_notification = notified) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication = stable & S_low_battery_notification = notified & S_obstacle_detection = stable) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked = no & S_communication = stable & S_low_battery_notification = notified & S_obstacle_detection = stable) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication_failure_notification = notified & S_low_battery_notification = notified & S_obstacle_detection_failure_notification = notified) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked = no & S_communication_failure_notification = notified & S_low_battery_notification = notified & S_obstacle_detection_failure_notification = notified) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked_notification = notified & S_communication_failure_notification = notified & S_low_battery_notification = notified & S_obstacle_detection = stable) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_being_blocked = no & S_communication_failure_notification = notified & S_low_battery_notification = notified & S_obstacle_detection = stable) | 
+        (S_flying = on_the_ground & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = stable & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = on_the_ground & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = stable & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = on_the_ground & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = degraded & S_battery = ok & S_mission_abort_request = no) | 
+        (S_flying = on_the_ground & S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = degraded & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_communication = lost) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_battery = critical) | 
+        (S_flying = flying & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes & S_mission_abort_request = yes) | 
+        (S_flying = flying & S_pylon_inspection = complete & S_manual_control_request = off & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = yes);
+    A_wait_for_start :=
+        (S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = no & S_communication = stable & S_battery = ok & S_mission_abort_request = no) | 
+        (S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = no & S_communication = stable & S_battery = low & S_mission_abort_request = no) | 
+        (S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = no & S_communication = degraded & S_battery = ok & S_mission_abort_request = no) | 
+        (S_pylon_inspection = not_complete & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = no & S_communication = degraded & S_battery = low & S_mission_abort_request = no) | 
+        (S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = no & S_communication = stable & S_battery = ok & S_mission_abort_request = no) | 
+        (S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = no & S_communication = stable & S_battery = low & S_mission_abort_request = no) | 
+        (S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = no & S_communication = degraded & S_battery = ok & S_mission_abort_request = no) | 
+        (S_pylon_inspection = not_complete & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = no & S_communication = degraded & S_battery = low & S_mission_abort_request = no) | 
+        (S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = no & S_communication = stable & S_battery = ok & S_mission_abort_request = no) | 
+        (S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = no & S_communication = stable & S_battery = low & S_mission_abort_request = no) | 
+        (S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = no & S_communication = degraded & S_battery = ok & S_mission_abort_request = no) | 
+        (S_pylon_inspection = not_complete & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = no & S_communication = degraded & S_battery = low & S_mission_abort_request = no) | 
+        (S_flying = flying & S_at_landing_position = unknown & S_mission_configuration = not_configured & S_mission_started = no) | 
+        (S_flying = flying & S_at_landing_position = yes & S_mission_configuration = configured & S_mission_started = no) | 
+        (S_flying = flying & S_at_landing_position = no & S_mission_configuration = configured & S_mission_started = no);
+    A_notify_being_blocked :=
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = stable) | 
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = degraded) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = stable) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = degraded) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = stable) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_being_blocked = yes & S_being_blocked_notification = not_yet_notified & S_communication = degraded);
+    A_notify_communication_failure :=
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_communication = degraded & S_communication_failure_notification = not_yet_notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_communication = degraded & S_communication_failure_notification = not_yet_notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_communication = degraded & S_communication_failure_notification = not_yet_notified);
+    A_notify_low_battery :=
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_communication = stable & S_battery = low & S_low_battery_notification = not_yet_notified) | 
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_communication = degraded & S_battery = low & S_low_battery_notification = not_yet_notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_communication = stable & S_battery = low & S_low_battery_notification = not_yet_notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_communication = degraded & S_battery = low & S_low_battery_notification = not_yet_notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_communication = stable & S_battery = low & S_low_battery_notification = not_yet_notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_communication = degraded & S_battery = low & S_low_battery_notification = not_yet_notified);
+    A_notify_critical_battery :=
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_communication = stable & S_battery = critical & S_critical_battery_notification = not_yet_notified) | 
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_communication = degraded & S_battery = critical & S_critical_battery_notification = not_yet_notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_communication = stable & S_battery = critical & S_critical_battery_notification = not_yet_notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_communication = degraded & S_battery = critical & S_critical_battery_notification = not_yet_notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_communication = stable & S_battery = critical & S_critical_battery_notification = not_yet_notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_communication = degraded & S_battery = critical & S_critical_battery_notification = not_yet_notified);
+    A_notify_obstacle_detection_failure :=
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_communication = stable & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified) | 
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_communication = degraded & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_communication = stable & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_communication = degraded & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_communication = stable & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_communication = degraded & S_obstacle_detection = lost & S_obstacle_detection_failure_notification = not_yet_notified);
+    A_reset_being_blocked_notification_status :=
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_being_blocked = no & S_being_blocked_notification = notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_being_blocked = no & S_being_blocked_notification = notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_being_blocked = no & S_being_blocked_notification = notified);
+    A_reset_communication_failure_notification_status :=
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_communication = stable & S_communication_failure_notification = notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_communication = stable & S_communication_failure_notification = notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_communication = stable & S_communication_failure_notification = notified);
+    A_reset_low_battery_notification_status :=
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_battery = ok & S_low_battery_notification = notified) | 
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_battery = critical & S_low_battery_notification = notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_battery = ok & S_low_battery_notification = notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_battery = critical & S_low_battery_notification = notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_battery = ok & S_low_battery_notification = notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_battery = critical & S_low_battery_notification = notified);
+    A_reset_critical_battery_notification_status :=
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_battery = ok & S_critical_battery_notification = notified) | 
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_battery = low & S_critical_battery_notification = notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_battery = ok & S_critical_battery_notification = notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_battery = low & S_critical_battery_notification = notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_battery = ok & S_critical_battery_notification = notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_battery = low & S_critical_battery_notification = notified);
+    A_reset_obstacle_detection_failure_notification_status :=
+        (S_at_landing_position = unknown & S_mission_configuration = not_configured & S_obstacle_detection = stable & S_obstacle_detection_failure_notification = notified) | 
+        (S_at_landing_position = yes & S_mission_configuration = configured & S_obstacle_detection = stable & S_obstacle_detection_failure_notification = notified) | 
+        (S_at_landing_position = no & S_mission_configuration = configured & S_obstacle_detection = stable & S_obstacle_detection_failure_notification = notified);
+
+VAR
+    input.distance_to_inspection_point: array 0..2 of real;
+    input.distance_to_landing_location: real;
+    input.altitude: real;
+
+    input.battery: real;
+    input.manual_control_on_event: boolean;
+    input.manual_control_off_event: boolean;
+    input.mission_start_event: boolean;
+    input.mission_abort_event: boolean;
+    input.configure_mission_event: boolean;
+    input.communication_status: {stable, degraded, lost};
+    input.obstacle_detection_status: {stable, lost};
+
+    var.next_point_index: 0..3;
+
+DEFINE
+    constant.flying_threshold := 1;
+    constant.battery_low_threshold := 3;
+    constant.battery_critical_threshold := 1;
+
+ASSIGN
+    S_flying := 
+        case
+            input.altitude = 0 : on_the_ground;
+            TRUE : flying;
+        esac;
+
+ASSIGN
+    S_pylon_inspection :=
+        case
+            var.next_point_index = 3 : complete;
+            TRUE : not_complete;
+        esac;
+
+    init(var.next_point_index) := 0;
+
+    next(var.next_point_index) :=
+        case
+            var.next_point_index = 3 : 3;
+            input.distance_to_inspection_point[var.next_point_index] = 0 : var.next_point_index + 1;
+            TRUE : var.next_point_index;
+        esac;
+
+ASSIGN
+    init(S_manual_control_request) := off;
+    
+    next(S_manual_control_request) :=
+        case
+            input.manual_control_on_event = TRUE & S_manual_control_request = off : on;
+            input.manual_control_off_event = TRUE & S_manual_control_request = on : off;
+        esac;
+
+ASSIGN
+    init(S_at_landing_position) :=
+        case
+            input.configure_mission_event = FALSE : unknown;
+            input.distance_to_landing_location = 0: yes;
+            TRUE : no;
+        esac;
+    
+    next(S_at_landing_position) :=
+        case
+            S_at_landing_position = unknown & next(input.configure_mission_event = FALSE) : unknown;
+            next(input.distance_to_landing_location = 0) : yes;
+            TRUE : no;
+        esac;
+
+ASSIGN
+    init(S_mission_configuration) :=
+        case
+            input.configure_mission_event = TRUE : configured;
+            TRUE : not_configured;
+        esac;
+
+    next(S_mission_configuration) :=
+        case
+            next(input.configure_mission_event = TRUE) : configured;
+            TRUE : S_mission_configuration;
+        esac;
+
+ASSIGN
+    init(S_mission_started) :=
+        case
+            input.mission_start_event = TRUE : yes;
+            TRUE : no;
+        esac;
+    
+    next(S_mission_started) :=
+        case
+            next(input.mission_start_event = TRUE) : yes;
+            TRUE : S_mission_started;
+        esac;
+
+ASSIGN
+    init(S_being_blocked) := no;
+
+    next(S_being_blocked) :=
+        case
+            (
+                (
+                    A_go_to_landing_zone & 
+                    input.distance_to_landing_location > 0 &
+                    next(input.distance_to_landing_location) = input.distance_to_landing_location
+                ) |
+                (
+                    A_execute_mission_task & 
+                    var.next_point_index < 3 &
+                    next(var.next_point_index) = var.next_point_index &
+                    input.distance_to_inspection_point[var.next_point_index] > 0 &
+                    next(input.distance_to_inspection_point[var.next_point_index]) = input.distance_to_inspection_point[var.next_point_index]
+                )
+            ) : yes;
+            TRUE : no;
+        esac;
+
+ASSIGN
+    S_battery :=
+        case
+            input.battery <= constant.battery_critical_threshold  : critical;
+            input.battery <= constant.battery_low_threshold : low;
+            TRUE : ok;
+        esac;
+
+ASSIGN
+    init(S_mission_abort_request) :=
+        case
+            input.mission_abort_event = TRUE : yes;
+            TRUE : no;
+        esac;
+    
+    next(S_mission_abort_request) :=
+        case
+            next(input.mission_abort_event = TRUE) : yes;
+            TRUE : S_mission_abort_request;
+        esac;
+
+ASSIGN
+    S_communication :=
+        case
+            input.communication_status = stable : stable;
+            input.communication_status = degraded : degraded;
+            input.communication_status = lost : lost;
+        esac;
+
+ASSIGN
+    S_obstacle_detection :=
+        case
+            input.obstacle_detection_status = stable : stable;
+            input.obstacle_detection_status = lost : lost;
+        esac;
+
+
+ASSIGN
+    init(S_being_blocked_notification) := not_yet_notified;
+    init(S_communication_failure_notification) := not_yet_notified;
+    init(S_low_battery_notification) := not_yet_notified;
+    init(S_critical_battery_notification) := not_yet_notified;
+    init(S_obstacle_detection_failure_notification) := not_yet_notified;
+
+    next(S_being_blocked_notification) :=
+        case
+            A_notify_being_blocked & S_communication != lost : notified;
+            A_reset_being_blocked_notification_status : not_yet_notified;
+            TRUE : S_being_blocked_notification;
+        esac;
+    next(S_communication_failure_notification) :=
+        case
+            A_notify_communication_failure & S_communication != lost : notified;
+            A_reset_communication_failure_notification_status : not_yet_notified;
+            TRUE : S_communication_failure_notification;
+        esac;
+    next(S_low_battery_notification) :=
+        case
+            A_notify_low_battery & S_communication != lost : notified;
+            A_reset_low_battery_notification_status : not_yet_notified;
+            TRUE : S_low_battery_notification;
+        esac;
+    next(S_critical_battery_notification) :=
+        case
+            A_notify_critical_battery & S_communication != lost : notified;
+            A_reset_critical_battery_notification_status : not_yet_notified;
+            TRUE : S_critical_battery_notification;
+        esac;
+    next(S_obstacle_detection_failure_notification) :=
+        case
+            A_notify_obstacle_detection_failure & S_communication != lost : notified;
+            A_reset_obstacle_detection_failure_notification_status : not_yet_notified;
+            TRUE : S_obstacle_detection_failure_notification;
+        esac;
+
+-- common assumptions for all properties
+TRANS
+    A_take_off -> next(input.altitude) > input.altitude
+
+TRANS
+    (
+        A_execute_mission_task & 
+        next(var.next_point_index) = var.next_point_index &
+        var.next_point_index < 3
+    ) -> 
+    (
+        next(input.distance_to_inspection_point[var.next_point_index]) <= input.distance_to_inspection_point[var.next_point_index]
+    )
+
+TRANS
+    (
+        next(input.distance_to_inspection_point) != input.distance_to_inspection_point |
+        next(input.distance_to_landing_location) != input.distance_to_landing_location
+    ) -> (
+        A_go_to_landing_zone |
+        A_manual_control |
+        A_execute_mission_task
+    )
+
+TRANS
+    input.distance_to_inspection_point[0] >= 0 &
+    input.distance_to_inspection_point[1] >= 0 &
+    input.distance_to_inspection_point[2] >= 0 &
+    input.distance_to_landing_location >= 0 &
+    input.altitude >= 0 &
+    input.battery >= 0
+
+LTLSPEC NAME ltlspec_p1 :=
+    (
+        (
+            (
+                input.altitude = 0 &
+                input.distance_to_landing_location = 0
+            ) &
+            G (
+                (
+                    next(input.distance_to_inspection_point) != input.distance_to_inspection_point |
+                    next(input.distance_to_landing_location) != input.distance_to_landing_location
+                ) 
+                ->
+                (
+                    next(input.altitude) > 0 &
+                    input.altitude > 0
+                ) 
+            ) &
+            G (
+                (
+                    next(input.altitude) = 0 &
+                    input.altitude != 0
+                )
+                ->
+                A_land
+            )
+        )
+        ->
+        G (
+            input.altitude = 0 -> input.distance_to_landing_location = 0
+        )
+    )
+
+LTLSPEC NAME ltlspec_p2 :=
+    (
+        G (
+            (
+                input.altitude = 0 & next(input.altitude) > 0
+            ) ->
+            A_take_off
+        ) &
+        input.altitude = 0
+    )
+    ->
+    G (
+        input.altitude > 0 -> O (input.mission_start_event = TRUE)
+    )
+
+LTLSPEC NAME ltlspec_p3 :=
+    G (input.communication_status != lost)
+    ->
+    G (
+        (
+            input.battery <= constant.battery_low_threshold &
+            input.battery > constant.battery_critical_threshold &
+            ! (Y (
+                input.battery <= constant.battery_low_threshold &
+                input.battery > constant.battery_critical_threshold
+            ))
+        ) ->
+        A_notify_low_battery
+    )
+
+LTLSPEC NAME ltlspec_p4 :=
+    (
+        F (input.configure_mission_event = TRUE) &
+        G (input.mission_abort_event = FALSE) &
+        F (input.mission_start_event = TRUE) &
+        (
+            G (input.manual_control_on_event = FALSE ) |
+            F (input.manual_control_off_event = TRUE & G input.manual_control_on_event = FALSE)
+        ) &
+        G (input.battery > constant.battery_low_threshold) &
+        -- a4.1
+        -- ! F G (A_execute_mission_task & S_being_blocked = no & X (S_pylon_inspection != complete)) &
+        -- a4.11
+        -- F G (S_being_blocked = no) &
+        F G (
+            A_execute_mission_task &
+            var.next_point_index < 3 &
+            next(input.distance_to_inspection_point[var.next_point_index]) < input.distance_to_inspection_point[var.next_point_index]
+        ) &
+        -- a4.12
+        F G (input.communication_status = stable) &
+        -- a4.13
+        F G (input.obstacle_detection_status = stable) &
+        G (
+            (
+                input.altitude > 0 &
+                next(input.altitude) = 0
+            ) ->
+            A_land
+        )
+    )
+    ->
+    F (var.next_point_index = 3)
